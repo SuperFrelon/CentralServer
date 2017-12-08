@@ -21,7 +21,7 @@ namespace TcpServer
 
         public IPEndPoint LocalEndPoint { get; set; }
 
-        public bool RobotIsConnected { get => _robotIsConnected; }
+        public bool RobotIsConnected => _robotIsConnected;
 
         public enum Action
         {
@@ -30,6 +30,10 @@ namespace TcpServer
             Right,
             Forward,
             Backward,
+            BackLeft,
+            BackRight,
+            RotateLeft,
+            RotateRight,
             Stop
         }
 
@@ -55,6 +59,7 @@ namespace TcpServer
                             if (_tcpClient != null) _tcpClient.Dispose();
                             _tcpClient = tcpClient;
                             _robotIsConnected = true;
+                            Console.Beep(1000, 500);
                         }
                         catch(ObjectDisposedException)
                         {
@@ -70,12 +75,16 @@ namespace TcpServer
         {
             using (await _mutex.LockAsync())
             {
-                if (_tcpClient == null) throw new InvalidOperationException("Client must not be null");
-                using (StreamWriter streamWriter = new StreamWriter(_tcpClient.GetStream(), Encoding.UTF8, 2048, true))
+                await Ping();
+
+                if (_robotIsConnected)
                 {
-                    await streamWriter.WriteLineAsync(action.ToString());
-                    await streamWriter.FlushAsync();
-                    Console.WriteLine("Is Moved");
+                    using (StreamWriter streamWriter = new StreamWriter(_tcpClient.GetStream(), Encoding.UTF8, 2048, true))
+                    {
+                        await streamWriter.WriteLineAsync(action.ToString());
+                        await streamWriter.FlushAsync();
+                        Console.WriteLine("Instruction send : {0}", action);
+                    }
                 }
             }
         }
@@ -92,6 +101,32 @@ namespace TcpServer
                 // Puis les déco
                 _tcpListener.Stop();
                 _isOpen = false;
+            }
+        }
+
+        static bool IsSocketConnected(Socket s)
+        {
+            return !((s.Poll(1000, SelectMode.SelectRead) && (s.Available == 0)) || !s.Connected);
+        }
+
+        public async Task Ping()
+        {
+            try
+            {
+                using (StreamWriter streamWriter = new StreamWriter(_tcpClient.GetStream(), Encoding.UTF8, 2048, true))
+                {
+                    await streamWriter.WriteLineAsync("Ping");
+                    await streamWriter.FlushAsync();
+                }
+                using (StreamReader streamReader = new StreamReader(_tcpClient.GetStream(), Encoding.UTF8, false, 2048, true))
+                {
+                    string responce = await streamReader.ReadLineAsync();
+                    if (responce == "Pong") _robotIsConnected = true;
+                }
+            }
+            catch(IOException)
+            {
+                _robotIsConnected = false;
             }
         }
     }

@@ -20,13 +20,12 @@ namespace ComputingServer.Controllers
         [HttpGet]
         public async Task<string> Move(MovingDirection movingDirection)
         {
-            if (movingDirection.Direction == ConcurrentTcpServer.Action.Right) await _concurrentTcpServer.Move(ConcurrentTcpServer.Action.Right);
-            else if (movingDirection.Direction == ConcurrentTcpServer.Action.Left) await _concurrentTcpServer.Move(ConcurrentTcpServer.Action.Left);
-            else if (movingDirection.Direction == ConcurrentTcpServer.Action.Forward) await _concurrentTcpServer.Move(ConcurrentTcpServer.Action.Forward);
-            else if (movingDirection.Direction == ConcurrentTcpServer.Action.Backward) await _concurrentTcpServer.Move(ConcurrentTcpServer.Action.Backward);
-            else if (movingDirection.Direction == ConcurrentTcpServer.Action.Stop) await _concurrentTcpServer.Move(ConcurrentTcpServer.Action.Stop);
-
-            return movingDirection.Direction.ToString();
+            if (_concurrentTcpServer.RobotIsConnected)
+            {
+                await _concurrentTcpServer.Move(movingDirection.Direction);
+                return movingDirection.Direction.ToString();
+            }
+            return "Robot is not connected";
         }
     }
 }
