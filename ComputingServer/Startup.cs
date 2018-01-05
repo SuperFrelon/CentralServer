@@ -30,7 +30,7 @@ namespace ComputingServer
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ConcurrentTcpServer concurrentTcpServer)
         {
-            concurrentTcpServer.LocalEndPoint = new IPEndPoint(IPAddress.Parse("172.20.10.3"), 8000);
+            concurrentTcpServer.LocalEndPoint = new IPEndPoint(IPAddress.Parse("192.168.43.192"), 8000);
             concurrentTcpServer.Start();
 
             if (env.IsDevelopment())
